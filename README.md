@@ -1,10 +1,10 @@
-#brownian brush
+# brownian brush
 
 it does not use ai
 
 it just turns the image into probabilities and then throws samples at a canvas
 
-#what it does
+## what it does
 
 lets you upload a png or jpg
 turns it grayscale
@@ -16,14 +16,14 @@ shows a little animation of the drawing appearing
 lets you export the final image
 lets you export the equations for the lines it drew
 
-#why
+## why
 i wanted a small math art project that looked cool but was actually simple
 
 an image is basically just a grid of numbers so this treats the grid like a probability distribution
 
 then the picture slowly shows up because the random samples keep landing in the important places
 
-#how it works
+## how it works
 
 first it converts the image to grayscale
 
@@ -63,7 +63,7 @@ x = c
 
 for dot modes it exports dot coordinates instead because there are no line equations
 
-#how to use it
+## how to use it
 
 download or clone this
 
@@ -94,12 +94,12 @@ nothing gets sent anywhere
 
 it just runs locally and saves temporary output files on your computer
 
-#note
+## note
 
 this is not trying to be a real image editor
 
 
-#todo maybe
+## todo maybe
 
 make it faster for giant images
 add color reconstruction
