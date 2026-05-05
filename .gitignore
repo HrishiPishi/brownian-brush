@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+.DS_Store
+outputs/
+brownian_brush_output.png
+brownian_brush_equations.txt
+brownian_brush_metadata.json
