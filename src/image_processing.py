@@ -26,6 +26,7 @@ def load_image(uploaded_file: str | Path | BinaryIO) -> Image.Image:
         raise ValueError("Could not load image. Please use a valid PNG, JPG, or JPEG file.") from exc
 
 
+
 def resize_image(image: Image.Image, max_size: int = 512) -> Image.Image:
     """Resize an image while preserving aspect ratio.
 
@@ -43,6 +44,7 @@ def resize_image(image: Image.Image, max_size: int = 512) -> Image.Image:
     return image.resize(new_size, Image.Resampling.LANCZOS)
 
 
+
 def normalize_image(gray: Array) -> Array:
     """Normalize an image-like array into float values in [0, 1]."""
     arr = np.asarray(gray, dtype=np.float64)
@@ -58,6 +60,23 @@ def normalize_image(gray: Array) -> Array:
     if arr.min() >= 0 and arr.max() <= 255:
         return np.clip(arr / 255.0, 0.0, 1.0)
     return np.clip((arr - arr.min()) / (arr.max() - arr.min()), 0.0, 1.0)
+
+
+
+def to_rgb_array(image: Image.Image | Array) -> Array:
+    """Convert an RGB image-like input into a float array in [0, 1]."""
+    if isinstance(image, Image.Image):
+        arr = np.asarray(image.convert("RGB"), dtype=np.float64) / 255.0
+    else:
+        arr = np.asarray(image, dtype=np.float64)
+        if arr.ndim != 3 or arr.shape[2] < 3:
+            raise ValueError("expected an rgb image")
+        if arr.min() < 0 or arr.max() > 1:
+            arr = np.clip(arr / 255.0, 0.0, 1.0)
+        else:
+            arr = np.clip(arr, 0.0, 1.0)
+    return arr[..., :3]
+
 
 
 def to_grayscale(image: Image.Image | Array) -> Array:
@@ -79,6 +98,7 @@ def to_grayscale(image: Image.Image | Array) -> Array:
     return np.clip(gray, 0.0, 1.0)
 
 
+
 def compute_darkness(gray: Array, invert: bool = False) -> Array:
     """Return a darkness map in [0, 1].
 
@@ -88,6 +108,7 @@ def compute_darkness(gray: Array, invert: bool = False) -> Array:
     normalized = normalize_image(gray)
     darkness = normalized if invert else 1.0 - normalized
     return np.clip(darkness, 0.0, 1.0)
+
 
 
 def compute_edges(gray: Array) -> Array:
@@ -101,6 +122,39 @@ def compute_edges(gray: Array) -> Array:
     if max_value <= 0:
         return np.zeros_like(normalized, dtype=np.float64)
     return np.clip(magnitude / max_value, 0.0, 1.0)
+
+
+
+def compute_color_importance(image: Image.Image | Array) -> Array:
+    """Return a color-sensitivity map in [0, 1].
+
+    The map is high where color carries information that plain grayscale would
+    miss. It combines two simple signals:
+
+    - saturation: how different the RGB channels are
+    - local color contrast: how much the RGB values change spatially
+
+    That makes bright colorful edges and saturated regions easier to sample.
+    """
+    rgb = to_rgb_array(image)
+    if rgb.ndim != 3 or rgb.shape[2] != 3:
+        raise ValueError("expected an rgb image")
+
+    saturation = np.max(rgb, axis=2) - np.min(rgb, axis=2)
+
+    gy_r, gx_r = np.gradient(rgb[..., 0])
+    gy_g, gx_g = np.gradient(rgb[..., 1])
+    gy_b, gx_b = np.gradient(rgb[..., 2])
+    color_gradient = np.sqrt(gx_r * gx_r + gy_r * gy_r + gx_g * gx_g + gy_g * gy_g + gx_b * gx_b + gy_b * gy_b)
+
+    if float(color_gradient.max()) > 0:
+        color_gradient = color_gradient / float(color_gradient.max())
+    else:
+        color_gradient = np.zeros_like(saturation)
+
+    importance = 0.65 * saturation + 0.35 * color_gradient
+    return np.clip(importance, 0.0, 1.0)
+
 
 
 def validate_image_array(arr: Array) -> Tuple[int, int]:

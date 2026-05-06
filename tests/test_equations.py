@@ -29,3 +29,15 @@ def test_dot_coordinates_text():
     text = dot_coordinates_text(points, (10, 20))
     assert "number of dots: 2" in text
     assert "dot 1: x = 1, y = 2" in text
+
+
+def test_stroke_equations_can_include_colors():
+    strokes = [np.array([[0, 0], [1, 1]], dtype=float)]
+    text = stroke_equations_text(strokes, (5, 5), stroke_colors=[(255, 0, 0)])
+    assert "color: rgb(255, 0, 0)" in text
+
+
+def test_dot_coordinates_can_include_colors():
+    points = np.array([[1, 2]], dtype=float)
+    text = dot_coordinates_text(points, (10, 20), dot_colors=np.array([[0, 0, 255]]))
+    assert "color = rgb(0, 0, 255)" in text

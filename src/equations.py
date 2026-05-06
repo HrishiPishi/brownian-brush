@@ -9,11 +9,23 @@ import numpy as np
 Array = np.ndarray
 
 
+
 def _num(value: float) -> str:
     """Format a float so the export stays readable but precise enough."""
     text = f"{float(value):.4f}"
     text = text.rstrip("0").rstrip(".")
     return text if text not in {"-0", ""} else "0"
+
+
+
+def _color_text(color: Sequence[int] | np.ndarray | None) -> str | None:
+    if color is None:
+        return None
+    rgb = [int(np.clip(c, 0, 255)) for c in color]
+    if len(rgb) != 3:
+        raise ValueError("color must have length 3")
+    return f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+
 
 
 def line_equation(p0: Array, p1: Array) -> str:
@@ -39,11 +51,13 @@ def line_equation(p0: Array, p1: Array) -> str:
     return f"endpoints: {endpoints}\nparametric: {parametric}\ncartesian: {cartesian}"
 
 
+
 def stroke_equations_text(
     strokes: Sequence[Array],
     image_shape: tuple[int, int],
     *,
     max_segments: int | None = None,
+    stroke_colors: Sequence[Sequence[int]] | None = None,
 ) -> str:
     """Build a text file containing equations for all Brownian stroke segments."""
     height, width = image_shape
@@ -58,6 +72,9 @@ def stroke_equations_text(
         "",
     ]
 
+    if stroke_colors is not None and len(stroke_colors) != len(strokes):
+        raise ValueError("stroke_colors must match the number of strokes")
+
     written = 0
     for stroke_idx, stroke in enumerate(strokes, start=1):
         path = np.asarray(stroke, dtype=np.float64)
@@ -67,6 +84,8 @@ def stroke_equations_text(
             continue
 
         lines.append(f"stroke {stroke_idx}")
+        if stroke_colors is not None:
+            lines.append(f"  color: {_color_text(stroke_colors[stroke_idx - 1])}")
         for segment_idx in range(len(path) - 1):
             if max_segments is not None and written >= max_segments:
                 lines.append("")
@@ -85,11 +104,21 @@ def stroke_equations_text(
     return "\n".join(lines)
 
 
-def dot_coordinates_text(points: Array, image_shape: tuple[int, int], *, max_points: int | None = None) -> str:
+
+def dot_coordinates_text(
+    points: Array,
+    image_shape: tuple[int, int],
+    *,
+    max_points: int | None = None,
+    dot_colors: Array | None = None,
+) -> str:
     """Build a text file containing dot coordinates for non-line modes."""
     pts = np.asarray(points, dtype=np.float64)
     if pts.ndim != 2 or pts.shape[1] != 2:
         raise ValueError("points must have shape (n, 2)")
+    colors = None if dot_colors is None else np.asarray(dot_colors)
+    if colors is not None and len(colors) != len(pts):
+        raise ValueError("dot_colors must match the number of points")
     height, width = image_shape
     limit = len(pts) if max_points is None else min(max_points, len(pts))
     lines = [
@@ -102,7 +131,10 @@ def dot_coordinates_text(points: Array, image_shape: tuple[int, int], *, max_poi
         "",
     ]
     for idx, (x, y) in enumerate(pts[:limit], start=1):
-        lines.append(f"dot {idx}: x = {_num(x)}, y = {_num(y)}")
+        line = f"dot {idx}: x = {_num(x)}, y = {_num(y)}"
+        if colors is not None:
+            line += f", color = {_color_text(colors[idx - 1])}"
+        lines.append(line)
     if max_points is not None and len(pts) > max_points:
         lines.append("")
         lines.append(f"stopped after {max_points} dots")

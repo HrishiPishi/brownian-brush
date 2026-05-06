@@ -36,3 +36,22 @@ def test_side_by_side_and_png_export():
     assert combined.size == (25, 8)
     data = to_png_bytes(combined)
     assert data.startswith(b"\x89PNG")
+
+
+def test_render_dots_can_use_per_point_colors():
+    points = np.array([[1, 1], [3, 1]], dtype=float)
+    colors = np.array([[255, 0, 0], [0, 0, 255]], dtype=np.uint8)
+    image = render_dots(points, (5, 5), dot_size=2, opacity=1.0, point_colors=colors)
+    assert image.getpixel((1, 1))[0] > 200
+    assert image.getpixel((3, 1))[2] > 200
+
+
+def test_render_strokes_can_use_per_stroke_colors():
+    strokes = [
+        np.array([[0, 0], [0, 3]], dtype=float),
+        np.array([[4, 0], [4, 3]], dtype=float),
+    ]
+    colors = [(255, 0, 0), (0, 128, 255)]
+    image = render_strokes(strokes, (5, 5), stroke_width=1, opacity=1.0, stroke_colors=colors)
+    assert image.getpixel((0, 1))[0] > 200
+    assert image.getpixel((4, 1))[2] > 200

@@ -9,12 +9,14 @@ it just turns the image into probabilities and then throws samples at a canvas
 lets you upload a png or jpg
 turns it grayscale
 samples more from darker parts of the image
+can also use color sensitivity so colorful areas matter more too
 can redraw it with dots
 can redraw it with brownian looking lines
 can use simple edge detection so outlines show up more
 shows a little animation of the drawing appearing
 lets you export the final image
 lets you export the equations for the lines it drew
+lets you export coordinates for dot modes
 
 ## why
 i wanted a small math art project that looked cool but was actually simple
@@ -47,6 +49,8 @@ for edge mode it also samples more from places where brightness changes quickly
 
 for brownian lines it samples a target point and draws a short random walk near it
 
+if color sensitivity is on, the dots and lines use colors from the original image instead of just one ink color
+
 line equations
 
 for brownian lines the app saves the equations for every tiny line segment it drew
@@ -60,6 +64,8 @@ cartesian: y = mx + b
 if the line is vertical it writes
 
 x = c
+
+if color sensitivity is on it also saves the rgb color for each stroke
 
 for dot modes it exports dot coordinates instead because there are no line equations
 
@@ -102,7 +108,6 @@ this is not trying to be a real image editor
 ## todo maybe
 
 make it faster for giant images
-add color reconstruction
 add better line styles
 make the animation less janky
 add a folder of examples

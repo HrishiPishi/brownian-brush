@@ -1,7 +1,14 @@
 import numpy as np
 from PIL import Image
 
-from src.image_processing import compute_darkness, compute_edges, normalize_image, resize_image, to_grayscale
+from src.image_processing import (
+    compute_color_importance,
+    compute_darkness,
+    compute_edges,
+    normalize_image,
+    resize_image,
+    to_grayscale,
+)
 
 
 def test_grayscale_output_shape_and_range():
@@ -45,3 +52,14 @@ def test_edges_have_correct_shape_and_range():
     assert edges.min() >= 0
     assert edges.max() <= 1
     assert edges.max() > 0
+
+
+def test_color_importance_highlights_colored_regions():
+    image = np.zeros((6, 6, 3), dtype=np.uint8)
+    image[:] = [120, 120, 120]
+    image[:, 3:] = [255, 0, 0]
+    importance = compute_color_importance(image)
+    assert importance.shape == (6, 6)
+    assert importance.min() >= 0
+    assert importance.max() <= 1
+    assert importance[:, 3:].mean() > importance[:, :3].mean()
