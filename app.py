@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+import threading
+import webbrowser
 import html
 import json
 import mimetypes
@@ -693,17 +694,24 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     host = "127.0.0.1"
-    port = 5000
-    print(f"brownian brush running at http://{host}:{port}")
+    port = 8000
+
+    try:
+        server = ThreadingHTTPServer((host, port), Handler)
+    except OSError:
+        server = ThreadingHTTPServer((host, 0), Handler)
+        port = server.server_address[1]
+
+    url = f"http://{host}:{port}"
+
+    print(f"brownian brush running at {url}")
     print("press ctrl c to stop")
-    server = ThreadingHTTPServer((host, port), Handler)
+
+    threading.Timer(0.75, lambda: webbrowser.open(url)).start()
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nstopped")
     finally:
         server.server_close()
-
-
-if __name__ == "__main__":
-    main()
